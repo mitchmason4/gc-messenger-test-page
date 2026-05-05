@@ -312,24 +312,41 @@
       statusMessage.className = 'status-message info';
       statusMessage.style.display = 'block';
 
+      // Map region domain to Genesys environment code for service discovery
+      var environmentMap = {
+        'mypurecloud.com': 'prod',
+        'usw2.pure.cloud': 'prod-usw2',
+        'cac1.pure.cloud': 'prod-cac1',
+        'mypurecloud.ie': 'prod-euw1',
+        'euw2.pure.cloud': 'prod-euw2',
+        'mypurecloud.de': 'prod-euc1',
+        'mypurecloud.com.au': 'prod-apse2',
+        'mypurecloud.jp': 'prod-apne1',
+        'apne2.pure.cloud': 'prod-apne2'
+      };
+
       // Construct the script src URL
       var scriptSrc = 'https://apps.' + region + '/genesys-bootstrap/genesys.min.js';
 
-      // Build the configuration object
+      // Build the configuration object with correct environment code
       var genesysConfig = {
-        environment: region,
+        environment: environmentMap[region] || region,
         deploymentId: deploymentId
       };
 
-      // Set up a timeout to detect widget render failure (~10 seconds)
+      // Set up a timeout to detect widget render failure (~15 seconds)
       var widgetRenderTimeout = setTimeout(function () {
-        // Check if a Genesys Messenger iframe appeared in the DOM
-        var messengerIframe = document.querySelector('iframe[id*="enesys"], iframe[src*="enesys"], iframe[title*="essenger"]');
-        if (!messengerIframe) {
+        // Check if a Genesys Messenger element appeared in the DOM
+        var messengerElement = document.querySelector(
+          'iframe[id*="enesys"], iframe[src*="enesys"], iframe[title*="essenger"], ' +
+          '[id*="genesys-messenger"], [class*="genesys-messenger"], ' +
+          'iframe[name*="enesys"], [data-genesys]'
+        );
+        if (!messengerElement) {
           statusMessage.textContent = 'Messenger widget did not load. The Deployment ID may be invalid or the deployment may be inactive.';
           statusMessage.className = 'status-message error';
         }
-      }, 10000);
+      }, 15000);
 
       // Inject the Genesys bootstrap IIFE (with onerror handler on the script element)
       (function (g, e, n, es, ys) {
@@ -351,15 +368,14 @@
         document.head.appendChild(ys);
       })(window, 'Genesys', scriptSrc, genesysConfig);
 
-      // Subscribe to Messenger.ready to update status when widget is loaded
+      // Subscribe to Messenger.ready to open widget and update status
       Genesys('subscribe', 'Messenger.ready', function () {
         clearTimeout(widgetRenderTimeout);
         statusMessage.textContent = 'Messenger widget loaded successfully.';
         statusMessage.className = 'status-message info';
+        // Open the Messenger widget only after it's ready
+        Genesys('command', 'Messenger.open');
       });
-
-      // Open the Messenger widget
-      Genesys('command', 'Messenger.open');
     }
 
     // --- Reset Controller ---
