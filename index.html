@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genesys Cloud Messenger Test Page</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+        Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      padding: 2rem;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .card h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 0.25rem;
+    }
+
+    .card .subtitle {
+      font-size: 0.875rem;
+      color: #666;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Form styles */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 0.375rem;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      color: #333;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #4a90d9;
+      box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+    }
+
+    .form-group .validation-error {
+      font-size: 0.75rem;
+      color: #dc3545;
+      margin-top: 0.25rem;
+      display: none;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-primary {
+      background-color: #4a90d9;
+      color: #fff;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background-color: #3a7bc8;
+    }
+
+    .btn-secondary {
+      background-color: #e9ecef;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background-color: #dde0e3;
+    }
+
+    /* Status / error messages */
+    .status-message {
+      font-size: 0.8125rem;
+      padding: 0.625rem 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .status-message.error {
+      background-color: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .status-message.info {
+      background-color: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    /* Active config display */
+    .active-config {
+      display: none;
+      font-size: 0.8125rem;
+      color: #555;
+      margin-bottom: 1rem;
+      padding: 0.625rem 0.75rem;
+      background-color: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+    }
+
+    .active-config strong {
+      color: #333;
+    }
+
+    /* Button group for reset */
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .button-group .btn {
+      flex: 1;
+    }
+
+    /* Footer note */
+    .footer-note {
+      font-size: 0.6875rem;
+      color: #999;
+      text-align: center;
+      margin-top: 1.25rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #eee;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 520px) {
+      body {
+        align-items: flex-start;
+        padding: 1rem 0.75rem;
+        padding-bottom: 5rem; /* leave room for Messenger widget FAB */
+      }
+
+      .card {
+        padding: 1.25rem;
+      }
+
+      .card h1 {
+        font-size: 1.125rem;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      .active-config {
+        word-break: break-all;
+      }
+    }
+
+    @media (max-width: 360px) {
+      body {
+        padding: 0.5rem;
+        padding-bottom: 5rem;
+      }
+
+      .card {
+        padding: 1rem;
+        border-radius: 6px;
+      }
+
+      .card h1 {
+        font-size: 1rem;
+      }
+
+      .card .subtitle {
+        font-size: 0.8125rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>GC Messenger Test Page</h1>
+    <p class="subtitle">Load and share Genesys Cloud Messenger deployments</p>
+
+    <!-- Status / error messages -->
+    <div id="statusMessage" class="status-message" role="alert"></div>
+
+    <!-- Active configuration display -->
+    <div id="activeConfig" class="active-config" role="status"></div>
+
+    <!-- Configuration form -->
+    <form id="configForm">
+      <div class="form-group">
+        <label for="deploymentId">Deployment ID</label>
+        <input type="text" id="deploymentId" name="deploymentId" placeholder="e.g. a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+        <div id="deploymentIdError" class="validation-error">Deployment ID is required</div>
+      </div>
+
+      <div class="form-group">
+        <label for="region">Region</label>
+        <select id="region" name="region">
+          <option value="">-- Select a region --</option>
+          <option value="mypurecloud.com">Americas (US East) - mypurecloud.com</option>
+          <option value="usw2.pure.cloud">Americas (US West) - usw2.pure.cloud</option>
+          <option value="cac1.pure.cloud">Canada - cac1.pure.cloud</option>
+          <option value="mypurecloud.ie">EMEA (Dublin) - mypurecloud.ie</option>
+          <option value="euw2.pure.cloud">EMEA (London) - euw2.pure.cloud</option>
+          <option value="mypurecloud.de">EMEA (Frankfurt) - mypurecloud.de</option>
+          <option value="mypurecloud.com.au">Asia Pacific (Sydney) - mypurecloud.com.au</option>
+          <option value="mypurecloud.jp">Asia Pacific (Tokyo) - mypurecloud.jp</option>
+          <option value="apne2.pure.cloud">Asia Pacific (Seoul) - apne2.pure.cloud</option>
+        </select>
+        <div id="regionError" class="validation-error">Region is required</div>
+      </div>
+
+      <div class="button-group">
+        <button type="submit" class="btn btn-primary">Load Messenger</button>
+        <button type="button" id="resetBtn" class="btn btn-secondary" style="display: none;" onclick="resetPage()">Reset</button>
+      </div>
+    </form>
+
+    <p class="footer-note">This tool is for testing and demo purposes only. It loads the Genesys Cloud Messenger widget using the provided deployment configuration.</p>
+  </div>
+
+  <script>
+    // --- URL Parameter Manager ---
+
+    /**
+     * Read deployment configuration from the current URL query parameters.
+     * @returns {{ deploymentId: string|null, region: string|null }}
+     */
+    function getConfigFromURL() {
+      var params = new URLSearchParams(window.location.search);
+      var deploymentId = params.get('deploymentId') || null;
+      var region = params.get('region') || null;
+      return { deploymentId: deploymentId, region: region };
+    }
+
+    /**
+     * Update the browser URL with deployment configuration and trigger a page reload.
+     * @param {string} deploymentId - The Genesys Cloud deployment UUID
+     * @param {string} region - The Genesys Cloud region string
+     */
+    function setConfigInURL(deploymentId, region) {
+      var params = new URLSearchParams();
+      params.set('deploymentId', deploymentId);
+      params.set('region', region);
+      window.location.search = params.toString();
+    }
+
+    // --- Messenger Snippet Injector ---
+
+    /**
+     * Inject the Genesys Messenger bootstrap snippet into the page.
+     * @param {string} deploymentId - The Genesys Cloud deployment UUID
+     * @param {string} region - The Genesys Cloud region string
+     */
+    function injectMessengerSnippet(deploymentId, region) {
+      // Show active configuration display
+      var activeConfig = document.getElementById('activeConfig');
+      activeConfig.innerHTML =
+        '<strong>Active Deployment:</strong> ' + deploymentId +
+        ' &nbsp;|&nbsp; <strong>Region:</strong> ' + region;
+      activeConfig.style.display = 'block';
+
+      // Show loading status
+      var statusMessage = document.getElementById('statusMessage');
+      statusMessage.textContent = 'Loading Messenger widget…';
+      statusMessage.className = 'status-message info';
+      statusMessage.style.display = 'block';
+
+      // Construct the script src URL
+      var scriptSrc = 'https://apps.' + region + '/genesys-bootstrap/genesys.min.js';
+
+      // Build the configuration object
+      var genesysConfig = {
+        environment: region,
+        deploymentId: deploymentId
+      };
+
+      // Set up a timeout to detect widget render failure (~10 seconds)
+      var widgetRenderTimeout = setTimeout(function () {
+        // Check if a Genesys Messenger iframe appeared in the DOM
+        var messengerIframe = document.querySelector('iframe[id*="enesys"], iframe[src*="enesys"], iframe[title*="essenger"]');
+        if (!messengerIframe) {
+          statusMessage.textContent = 'Messenger widget did not load. The Deployment ID may be invalid or the deployment may be inactive.';
+          statusMessage.className = 'status-message error';
+        }
+      }, 10000);
+
+      // Inject the Genesys bootstrap IIFE (with onerror handler on the script element)
+      (function (g, e, n, es, ys) {
+        g['_genesysJs'] = e;
+        g[e] = g[e] || function () {
+          (g[e].q = g[e].q || []).push(arguments);
+        };
+        g[e].t = 1 * new Date();
+        g[e].c = es;
+        ys = document.createElement('script');
+        ys.async = 1;
+        ys.src = n;
+        ys.charset = 'utf-8';
+        ys.onerror = function () {
+          clearTimeout(widgetRenderTimeout);
+          statusMessage.textContent = 'Failed to load Messenger. Please check the Deployment ID and Region.';
+          statusMessage.className = 'status-message error';
+        };
+        document.head.appendChild(ys);
+      })(window, 'Genesys', scriptSrc, genesysConfig);
+
+      // Subscribe to Messenger.ready to update status when widget is loaded
+      Genesys('subscribe', 'Messenger.ready', function () {
+        clearTimeout(widgetRenderTimeout);
+        statusMessage.textContent = 'Messenger widget loaded successfully.';
+        statusMessage.className = 'status-message info';
+      });
+
+      // Open the Messenger widget
+      Genesys('command', 'Messenger.open');
+    }
+
+    // --- Reset Controller ---
+
+    /**
+     * Reset the page to its initial state by navigating to the base URL without query parameters.
+     * Stores the current deploymentId and region in sessionStorage so the form can be pre-filled after reset.
+     */
+    function resetPage() {
+      var deploymentIdValue = document.getElementById('deploymentId').value.trim();
+      var regionValue = document.getElementById('region').value;
+
+      if (deploymentIdValue) {
+        sessionStorage.setItem('gc_messenger_last_deploymentId', deploymentIdValue);
+      }
+      if (regionValue) {
+        sessionStorage.setItem('gc_messenger_last_region', regionValue);
+      }
+
+      window.location.href = window.location.pathname;
+    }
+
+    // --- Page Initialization ---
+
+    /**
+     * Initialize the page on load:
+     * - Read URL params via getConfigFromURL()
+     * - If both deploymentId and region are present, populate the form and auto-load the Messenger widget
+     * - If only one param is present, pre-fill that field but do not auto-load
+     */
+    function init() {
+      var config = getConfigFromURL();
+      var deploymentIdInput = document.getElementById('deploymentId');
+      var regionSelect = document.getElementById('region');
+
+      if (config.deploymentId) {
+        deploymentIdInput.value = config.deploymentId;
+      }
+
+      if (config.region) {
+        regionSelect.value = config.region;
+      }
+
+      // If no URL params, check sessionStorage for previously-used values and pre-fill the form
+      if (!config.deploymentId && !config.region) {
+        var lastDeploymentId = sessionStorage.getItem('gc_messenger_last_deploymentId');
+        var lastRegion = sessionStorage.getItem('gc_messenger_last_region');
+
+        if (lastDeploymentId) {
+          deploymentIdInput.value = lastDeploymentId;
+        }
+        if (lastRegion) {
+          regionSelect.value = lastRegion;
+        }
+      }
+
+      // Auto-load only when both values are present
+      if (config.deploymentId && config.region) {
+        injectMessengerSnippet(config.deploymentId, config.region);
+
+        // Show the Reset button when the Messenger widget is active
+        document.getElementById('resetBtn').style.display = '';
+      }
+
+      // Form submit handler with validation
+      var form = document.getElementById('configForm');
+      var deploymentIdError = document.getElementById('deploymentIdError');
+      var regionError = document.getElementById('regionError');
+
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        var deploymentIdValue = deploymentIdInput.value.trim();
+        var regionValue = regionSelect.value;
+        var isValid = true;
+
+        // Validate Deployment ID
+        if (!deploymentIdValue) {
+          deploymentIdError.style.display = 'block';
+          isValid = false;
+        } else {
+          deploymentIdError.style.display = 'none';
+        }
+
+        // Validate Region
+        if (!regionValue) {
+          regionError.style.display = 'block';
+          isValid = false;
+        } else {
+          regionError.style.display = 'none';
+        }
+
+        // If validation fails, do not proceed
+        if (!isValid) {
+          return;
+        }
+
+        // Valid submission — update URL and reload
+        setConfigInURL(deploymentIdValue, regionValue);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
